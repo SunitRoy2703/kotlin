@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirPsiDiagnostic
+import org.jetbrains.kotlin.fir.analysis.diagnostics.KtPsiDiagnostic
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -149,7 +149,7 @@ fun <D : FirDeclaration, R> D.withFirDeclaration(
  * Returns a list of Diagnostics compiler finds for given [KtElement]
  * This operation could be performance affective because it create FIleStructureElement and resolve non-local declaration into BODY phase
  */
-fun KtElement.getDiagnostics(resolveState: FirModuleResolveState, filter: DiagnosticCheckerFilter): Collection<FirPsiDiagnostic> =
+fun KtElement.getDiagnostics(resolveState: FirModuleResolveState, filter: DiagnosticCheckerFilter): Collection<KtPsiDiagnostic> =
     resolveState.getDiagnostics(this, filter)
 
 /**
@@ -159,7 +159,7 @@ fun KtElement.getDiagnostics(resolveState: FirModuleResolveState, filter: Diagno
 fun KtFile.collectDiagnosticsForFile(
     resolveState: FirModuleResolveState,
     filter: DiagnosticCheckerFilter
-): Collection<FirPsiDiagnostic> =
+): Collection<KtPsiDiagnostic> =
     resolveState.collectDiagnosticsForFile(this, filter)
 
 /**
