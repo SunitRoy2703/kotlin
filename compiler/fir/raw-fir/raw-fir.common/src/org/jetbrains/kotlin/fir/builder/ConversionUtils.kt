@@ -6,8 +6,11 @@
 package org.jetbrains.kotlin.fir.builder
 
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.contracts.builder.buildLegacyRawContractDescription
@@ -161,7 +164,7 @@ fun IElementType.toFirOperation(): FirOperation =
     }
 
 fun FirExpression.generateNotNullOrOther(
-    other: FirExpression, baseSource: FirSourceElement?,
+    other: FirExpression, baseSource: KtSourceElement?,
 ): FirElvisExpression {
     return buildElvisExpression {
         source = baseSource
@@ -171,7 +174,7 @@ fun FirExpression.generateNotNullOrOther(
 }
 
 fun FirExpression.generateLazyLogicalOperation(
-    other: FirExpression, isAnd: Boolean, baseSource: FirSourceElement?,
+    other: FirExpression, isAnd: Boolean, baseSource: KtSourceElement?,
 ): FirBinaryLogicExpression {
     return buildBinaryLogicExpression {
         source = baseSource
@@ -184,16 +187,16 @@ fun FirExpression.generateLazyLogicalOperation(
 fun FirExpression.generateContainsOperation(
     argument: FirExpression,
     inverted: Boolean,
-    baseSource: FirSourceElement?,
-    operationReferenceSource: FirSourceElement?
+    baseSource: KtSourceElement?,
+    operationReferenceSource: KtSourceElement?
 ): FirFunctionCall {
     val containsCall = createConventionCall(operationReferenceSource, baseSource, argument, OperatorNameConventions.CONTAINS)
     if (!inverted) return containsCall
 
     return buildFunctionCall {
-        source = baseSource?.fakeElement(FirFakeSourceElementKind.DesugaredInvertedContains)
+        source = baseSource?.fakeElement(KtFakeSourceElementKind.DesugaredInvertedContains)
         calleeReference = buildSimpleNamedReference {
-            source = operationReferenceSource?.fakeElement(FirFakeSourceElementKind.DesugaredInvertedContains)
+            source = operationReferenceSource?.fakeElement(KtFakeSourceElementKind.DesugaredInvertedContains)
             name = OperatorNameConventions.NOT
         }
         explicitReceiver = containsCall
@@ -204,8 +207,8 @@ fun FirExpression.generateContainsOperation(
 fun FirExpression.generateComparisonExpression(
     argument: FirExpression,
     operatorToken: IElementType,
-    baseSource: FirSourceElement?,
-    operationReferenceSource: FirSourceElement?,
+    baseSource: KtSourceElement?,
+    operationReferenceSource: KtSourceElement?,
 ): FirComparisonExpression {
     require(operatorToken in OperatorConventions.COMPARISON_OPERATIONS) {
         "$operatorToken is not in ${OperatorConventions.COMPARISON_OPERATIONS}"
@@ -213,7 +216,7 @@ fun FirExpression.generateComparisonExpression(
 
     val compareToCall = createConventionCall(
         operationReferenceSource,
-        baseSource?.fakeElement(FirFakeSourceElementKind.GeneratedComparisonExpression),
+        baseSource?.fakeElement(KtFakeSourceElementKind.GeneratedComparisonExpression),
         argument,
         OperatorNameConventions.COMPARE_TO
     )
@@ -234,8 +237,8 @@ fun FirExpression.generateComparisonExpression(
 }
 
 private fun FirExpression.createConventionCall(
-    operationReferenceSource: FirSourceElement?,
-    baseSource: FirSourceElement?,
+    operationReferenceSource: KtSourceElement?,
+    baseSource: KtSourceElement?,
     argument: FirExpression,
     conventionName: Name
 ): FirFunctionCall {
@@ -252,8 +255,8 @@ private fun FirExpression.createConventionCall(
 }
 
 fun generateAccessExpression(
-    qualifiedSource: FirSourceElement?,
-    calleeReferenceSource: FirSourceElement?,
+    qualifiedSource: KtSourceElement?,
+    calleeReferenceSource: KtSourceElement?,
     name: Name,
     diagnostic: ConeDiagnostic? = null
 ): FirQualifiedAccessExpression =
@@ -261,7 +264,7 @@ fun generateAccessExpression(
         this.source = qualifiedSource
         calleeReference = buildSimpleNamedReference {
             this.source = if (calleeReferenceSource == qualifiedSource)
-                calleeReferenceSource?.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
+                calleeReferenceSource?.fakeElement(KtFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
             else
                 calleeReferenceSource
             this.name = name
@@ -271,7 +274,7 @@ fun generateAccessExpression(
         }
     }
 
-fun generateResolvedAccessExpression(source: FirSourceElement?, variable: FirVariable): FirQualifiedAccessExpression =
+fun generateResolvedAccessExpression(source: KtSourceElement?, variable: FirVariable): FirQualifiedAccessExpression =
     buildPropertyAccessExpression {
         this.source = source
         calleeReference = buildResolvedNamedReference {
@@ -283,7 +286,7 @@ fun generateResolvedAccessExpression(source: FirSourceElement?, variable: FirVar
 
 fun generateTemporaryVariable(
     moduleData: FirModuleData,
-    source: FirSourceElement?,
+    source: KtSourceElement?,
     name: Name,
     initializer: FirExpression,
     typeRef: FirTypeRef? = null,
@@ -311,7 +314,7 @@ fun generateTemporaryVariable(
 
 fun generateTemporaryVariable(
     moduleData: FirModuleData,
-    source: FirSourceElement?,
+    source: KtSourceElement?,
     specialName: String,
     initializer: FirExpression,
     extractedAnnotations: Collection<FirAnnotation>? = null,
@@ -350,7 +353,7 @@ fun <T> FirPropertyBuilder.generateAccessorsByDelegate(
     }
 
     val isMember = ownerRegularOrAnonymousObjectSymbol != null
-    val fakeSource = delegateBuilder.source?.fakeElement(FirFakeSourceElementKind.DelegatedPropertyAccessor)
+    val fakeSource = delegateBuilder.source?.fakeElement(KtFakeSourceElementKind.DelegatedPropertyAccessor)
 
     /*
      * If we have delegation with provide delegate then we generate call like
@@ -559,13 +562,13 @@ private fun FirExpression.checkReceiver(name: String?): Boolean {
     return receiverName == name
 }
 
-fun FirQualifiedAccess.wrapWithSafeCall(receiver: FirExpression, source: FirSourceElement): FirSafeCallExpression {
+fun FirQualifiedAccess.wrapWithSafeCall(receiver: FirExpression, source: KtSourceElement): FirSafeCallExpression {
     val checkedSafeCallSubject = buildCheckedSafeCallSubject {
         @OptIn(FirContractViolation::class)
         this.originalReceiverRef = FirExpressionRef<FirExpression>().apply {
             bind(receiver)
         }
-        this.source = receiver.source?.fakeElement(FirFakeSourceElementKind.CheckedSafeCallSubject)
+        this.source = receiver.source?.fakeElement(KtFakeSourceElementKind.CheckedSafeCallSubject)
     }
 
     replaceExplicitReceiver(checkedSafeCallSubject)
