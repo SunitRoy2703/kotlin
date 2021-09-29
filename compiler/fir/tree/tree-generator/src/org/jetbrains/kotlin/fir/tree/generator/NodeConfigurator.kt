@@ -414,6 +414,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +fieldList(import).withTransform()
             +declarations.withTransform()
             +stringField("name")
+            +stringField("path", nullable = true)
             +symbol("FirFileSymbol")
         }
 
