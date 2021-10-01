@@ -1,6 +1,7 @@
 // IGNORE_BACKEND: WASM
 // WASM_MUTE_REASON: IGNORED_IN_JS
 // IGNORE_BACKEND: JS
+// !LANGUAGE: +JsAllowInvalidCharsIdentifiersEscaping
 
 // Exclamation marks are not valid in names in the dex file format.
 // Therefore, do not attempt to dex this file as it will fail.

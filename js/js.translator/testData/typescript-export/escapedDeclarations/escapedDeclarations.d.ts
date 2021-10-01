@@ -4,10 +4,10 @@ declare namespace JS_TESTS {
 
 
 
-        function invalid_args_name_sum(first_value: number, second_value: number): number;
+        function invalid_args_name_sum(first$32$value: number, second$32$value: number): number;
 
         class A1 {
-            constructor(first_value: number, second_value: number);
+            constructor(first$32$value: number, second$46$value: number);
             readonly "first value": number;
             "second.value": number;
         }
@@ -18,7 +18,7 @@ declare namespace JS_TESTS {
         class A3 {
             constructor();
             "invalid@name sum"(x: number, y: number): number;
-            invalid_args_name_sum(first_value: number, second_value: number): number;
+            invalid_args_name_sum(first$32$value: number, second$32$value: number): number;
         }
         class A4 {
             constructor();

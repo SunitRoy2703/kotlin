@@ -382,15 +382,19 @@ fun sanitizeName(name: String): String {
 
     val builder = StringBuilder()
 
-    val first = name.first().let { if (it.isES5IdentifierStart()) it else '_' }
+    val first = name.first().let { if (it.isES5IdentifierStart()) it else it.mangle() }
     builder.append(first)
 
     for (idx in 1..name.lastIndex) {
         val c = name[idx]
-        builder.append(if (c.isES5IdentifierPart()) c else '_')
+        builder.append(if (c.isES5IdentifierPart()) c else c.mangle())
     }
 
     return builder.toString()
+}
+
+private fun Char.mangle(): String {
+    return "$$code$"
 }
 
 private const val SYNTHETIC_LOOP_LABEL = "\$l\$loop"

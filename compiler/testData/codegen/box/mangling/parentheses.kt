@@ -2,6 +2,7 @@
 // WASM_MUTE_REASON: IGNORED_IN_JS
 // !SANITIZE_PARENTHESES
 // IGNORE_BACKEND: JS
+// !LANGUAGE: +JsAllowInvalidCharsIdentifiersEscaping
 
 // Sanitization is needed here because DxChecker reports ParseException on parentheses in names.
 

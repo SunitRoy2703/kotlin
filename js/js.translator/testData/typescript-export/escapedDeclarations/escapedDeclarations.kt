@@ -3,6 +3,7 @@
 // SKIP_MINIFICATION
 // SKIP_NODE_JS
 // IGNORE_BACKEND: JS
+// !LANGUAGE: +JsAllowInvalidCharsIdentifiersEscaping
 
 @file:JsExport
 

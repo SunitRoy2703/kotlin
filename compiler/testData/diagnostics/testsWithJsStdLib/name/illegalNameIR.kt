@@ -1,3 +1,4 @@
+// SKIP_TXT
 // IGNORE_BACKEND: JS
 // !LANGUAGE: +JsAllowInvalidCharsIdentifiersEscaping
 
