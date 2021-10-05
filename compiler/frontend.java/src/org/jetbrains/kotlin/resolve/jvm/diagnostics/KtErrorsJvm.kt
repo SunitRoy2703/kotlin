@@ -8,10 +8,10 @@ package org.jetbrains.kotlin.resolve.jvm.diagnostics
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
+import org.jetbrains.kotlin.diagnostics.error0
 import org.jetbrains.kotlin.diagnostics.error1
-import org.jetbrains.kotlin.diagnostics.rendering.Renderer
-import org.jetbrains.kotlin.diagnostics.rendering.Renderers
-import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
+import org.jetbrains.kotlin.diagnostics.rendering.*
+import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers.STRING
 import org.jetbrains.kotlin.resolve.MemberComparator
 import org.jetbrains.kotlin.utils.join
 
@@ -20,34 +20,48 @@ object KtErrorsJvm {
     val CONFLICTING_JVM_DECLARATIONS by error1<PsiElement, ConflictingJvmDeclarationsData>()
     val CONFLICTING_INHERITED_JVM_DECLARATIONS by error1<PsiElement, ConflictingJvmDeclarationsData>()
     val ACCIDENTAL_OVERRIDE by error1<PsiElement, ConflictingJvmDeclarationsData>()
+
+    val TYPEOF_SUSPEND_TYPE by error0<PsiElement>()
+    val TYPEOF_EXTENSION_FUNCTION_TYPE by error0<PsiElement>()
+    val TYPEOF_ANNOTATED_TYPE by error0<PsiElement>()
+    val TYPEOF_NON_REIFIED_TYPE_PARAMETER_WITH_RECURSIVE_BOUND by error1<PsiElement, String>()
+
+    val SUSPENSION_POINT_INSIDE_MONITOR by error1<PsiElement, String>()
+
+    init {
+        RootDiagnosticRendererFactory.registerFactory(KtDefaultJvmErrorMessages)
+    }
 }
 
-class KtDefaultJvmErrorMessages {
-    companion object {
+object KtDefaultJvmErrorMessages : BaseDiagnosticRendererFactory() {
 
-        @JvmField
-        val CONFLICTING_JVM_DECLARATIONS_DATA = Renderer<ConflictingJvmDeclarationsData> {
-            val renderedDescriptors: List<DeclarationDescriptor?> =
-                it.signatureOrigins.mapNotNull(
-                    JvmDeclarationOrigin::descriptor
-                ).sortedWith(MemberComparator.INSTANCE)
-            val renderingContext: RenderingContext =
-                RenderingContext.Impl(renderedDescriptors)
-            """
+    @JvmField
+    val CONFLICTING_JVM_DECLARATIONS_DATA = Renderer<ConflictingJvmDeclarationsData> {
+        val renderedDescriptors: List<DeclarationDescriptor?> =
+            it.signatureOrigins.mapNotNull(
+                JvmDeclarationOrigin::descriptor
+            ).sortedWith(MemberComparator.INSTANCE)
+        val renderingContext: RenderingContext =
+            RenderingContext.Impl(renderedDescriptors)
+        """
                 The following declarations have the same JVM signature (${it.signature.name}${it.signature.desc}):
                 
                 """.trimIndent() +
-                    join(renderedDescriptors.map { descriptor: DeclarationDescriptor? ->
-                        "    " + Renderers.WITHOUT_MODIFIERS.render(
-                            descriptor!!, renderingContext
-                        )
-                    }, "\n")
-        }
+                join(renderedDescriptors.map { descriptor: DeclarationDescriptor? ->
+                    "    " + Renderers.WITHOUT_MODIFIERS.render(
+                        descriptor!!, renderingContext
+                    )
+                }, "\n")
+    }
 
-        val MAP = KtDiagnosticFactoryToRendererMap("KT").also { map ->
-            map.put(KtErrorsJvm.CONFLICTING_JVM_DECLARATIONS, "Platform declaration clash: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
-            map.put(KtErrorsJvm.ACCIDENTAL_OVERRIDE, "Accidental override: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
-            map.put(KtErrorsJvm.CONFLICTING_INHERITED_JVM_DECLARATIONS, "Inherited platform declarations clash: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
-        }
+    override val MAP = KtDiagnosticFactoryToRendererMap("KT").also { map ->
+        map.put(KtErrorsJvm.CONFLICTING_JVM_DECLARATIONS, "Platform declaration clash: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
+        map.put(KtErrorsJvm.ACCIDENTAL_OVERRIDE, "Accidental override: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
+        map.put(KtErrorsJvm.CONFLICTING_INHERITED_JVM_DECLARATIONS, "Inherited platform declarations clash: {0}", CONFLICTING_JVM_DECLARATIONS_DATA)
+        map.put(KtErrorsJvm.TYPEOF_SUSPEND_TYPE, "Suspend functional types are not supported in typeOf")
+        map.put(KtErrorsJvm.TYPEOF_EXTENSION_FUNCTION_TYPE, "Extension function types are not supported in typeOf")
+        map.put(KtErrorsJvm.TYPEOF_ANNOTATED_TYPE, "Annotated types are not supported in typeOf")
+        map.put(KtErrorsJvm.TYPEOF_NON_REIFIED_TYPE_PARAMETER_WITH_RECURSIVE_BOUND, "Non-reified type parameters with recursive bounds are not supported yet: {0}", STRING)
+        map.put(KtErrorsJvm.SUSPENSION_POINT_INSIDE_MONITOR, "A suspension point at {0} is inside a critical section", STRING)
     }
 }

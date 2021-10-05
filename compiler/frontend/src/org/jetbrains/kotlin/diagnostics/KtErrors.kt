@@ -6,14 +6,14 @@
 package org.jetbrains.kotlin.diagnostics
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.diagnostics.rendering.KtDefaultErrorMessages
+import org.jetbrains.kotlin.diagnostics.rendering.RootDiagnosticRendererFactory
 
 object KtErrors {
 
-    val NON_LOCAL_RETURN_IN_DISABLED_INLINE by error0<PsiElement>()
-    val TYPEOF_SUSPEND_TYPE by error0<PsiElement>()
-    val TYPEOF_EXTENSION_FUNCTION_TYPE by error0<PsiElement>()
-    val TYPEOF_ANNOTATED_TYPE by error0<PsiElement>()
-    val TYPEOF_NON_REIFIED_TYPE_PARAMETER_WITH_RECURSIVE_BOUND by error1<PsiElement, String>()
+    val NON_LOCAL_RETURN_IN_DISABLED_INLINE by error0<PsiElement>(SourceElementPositioningStrategies.DEFAULT)
 
-    val SUSPENSION_POINT_INSIDE_MONITOR by error1<PsiElement, String>()
+    init {
+        RootDiagnosticRendererFactory.registerFactory(KtDefaultErrorMessages)
+    }
 }

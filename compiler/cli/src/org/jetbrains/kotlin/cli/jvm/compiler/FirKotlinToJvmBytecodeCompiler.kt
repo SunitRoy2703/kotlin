@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
+import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticReporter
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.Fir2IrResult
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendClassResolver
@@ -125,9 +126,14 @@ object FirKotlinToJvmBytecodeCompiler {
 
         if (!checkKotlinPackageUsage(moduleConfiguration, allSources)) return null
 
-        val firResult = runFrontend(allSources).also {
+        val diagnosticsReporter = DiagnosticReporterFactory.createReporter()
+        val firResult = runFrontend(allSources, diagnosticsReporter).also {
             performanceManager?.notifyAnalysisFinished()
-        } ?: return null
+        }
+        if (firResult == null) {
+            FirDiagnosticsCompilerResultsReporter.reportToCollector(diagnosticsReporter, messageCollector)
+            return null
+        }
 
         performanceManager?.notifyGenerationStarted()
         performanceManager?.notifyIRTranslationStarted()
@@ -141,8 +147,11 @@ object FirKotlinToJvmBytecodeCompiler {
             allSources,
             fir2IrResult,
             extensions,
-            firResult.session
+            firResult.session,
+            diagnosticsReporter
         )
+
+        FirDiagnosticsCompilerResultsReporter.reportToCollector(diagnosticsReporter, messageCollector)
 
         performanceManager?.notifyIRGenerationFinished()
         performanceManager?.notifyGenerationFinished()
@@ -157,7 +166,7 @@ object FirKotlinToJvmBytecodeCompiler {
         val fir: List<FirFile>
     )
 
-    private fun CompilationContext.runFrontend(ktFiles: List<KtFile>): FirResult? {
+    private fun CompilationContext.runFrontend(ktFiles: List<KtFile>, diagnosticsReporter: BaseDiagnosticReporter): FirResult? {
         @Suppress("NAME_SHADOWING")
         var ktFiles = ktFiles
         val syntaxErrors = ktFiles.fold(false) { errorsFound, ktFile ->
@@ -241,7 +250,6 @@ object FirKotlinToJvmBytecodeCompiler {
         val commonRawFir = commonSession?.buildFirFromKtFiles(commonKtFiles)
         val rawFir = session.buildFirFromKtFiles(ktFiles)
 
-        val diagnosticsReporter = DiagnosticReporterFactory.createReporter()
         commonSession?.apply {
             val (commonScopeSession, commonFir) = runResolution(commonRawFir!!)
             runCheckers(commonScopeSession, commonFir, diagnosticsReporter)
@@ -250,9 +258,7 @@ object FirKotlinToJvmBytecodeCompiler {
         val (scopeSession, fir) = session.runResolution(rawFir)
         session.runCheckers(scopeSession, fir, diagnosticsReporter)
 
-        val hasErrors = FirDiagnosticsCompilerResultsReporter.reportToCollector(diagnosticsReporter, messageCollector)
-
-        return if (syntaxErrors || hasErrors) null else FirResult(session, scopeSession, fir)
+        return if (syntaxErrors || diagnosticsReporter.hasErrors) null else FirResult(session, scopeSession, fir)
     }
 
     private fun CompilationContext.createComponentsForIncrementalCompilation(
@@ -278,7 +284,8 @@ object FirKotlinToJvmBytecodeCompiler {
         ktFiles: List<KtFile>,
         fir2IrResult: Fir2IrResult,
         extensions: JvmGeneratorExtensionsImpl,
-        session: FirSession
+        session: FirSession,
+        diagnosticsReporter: BaseDiagnosticReporter
     ): GenerationState {
         val (moduleFragment, symbolTable, components) = fir2IrResult
         val dummyBindingContext = NoScopeRecordCliBindingTrace().bindingContext
@@ -302,6 +309,8 @@ object FirKotlinToJvmBytecodeCompiler {
             true
         ).jvmBackendClassResolver(
             FirJvmBackendClassResolver(components)
+        ).diagnosticReporter(
+            diagnosticsReporter
         ).build()
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
