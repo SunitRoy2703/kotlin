@@ -8018,10 +8018,5 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         public void testJsExternalVarargSuspend() throws Exception {
             runTest("js/js.translator/testData/box/vararg/jsExternalVarargSuspend.kt");
         }
-
-        @TestMetadata("useSuspendFunResultAsVararg.kt")
-        public void testUseSuspendFunResultAsVararg() throws Exception {
-            runTest("js/js.translator/testData/box/vararg/useSuspendFunResultAsVararg.kt");
-        }
     }
 }
