@@ -7999,9 +7999,9 @@ public class IrBoxJsES6TestGenerated extends AbstractIrBoxJsES6Test {
             runTest("js/js.translator/testData/box/vararg/jsExternalVarargSuspend.kt");
         }
 
-        @TestMetadata("KT-47096.kt")
-        public void testKT_47096() throws Exception {
-            runTest("js/js.translator/testData/box/vararg/KT-47096.kt");
+        @TestMetadata("useSuspendFunResultAsVararg.kt")
+        public void testUseSuspendFunResultAsVararg() throws Exception {
+            runTest("js/js.translator/testData/box/vararg/useSuspendFunResultAsVararg.kt");
         }
     }
 }

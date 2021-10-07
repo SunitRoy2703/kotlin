@@ -1,18 +1,13 @@
 // CALL_MAIN
 
-suspend fun getFromApi(): TodoItem {
-    val response = js("{ title: 'Test', completed: false }")
-    return TodoItem.fromRawTodoItem(response)
-}
-
 class TodoItem(var value: String, var completed: Boolean) {
-
-    companion object {
-        fun fromRawTodoItem(raw: dynamic) = TodoItem(raw.title, raw.completed)
-    }
     override fun toString(): String {
         return "TodoItem(value='$value', completed=$completed)"
     }
+}
+
+suspend fun getFromApi(): TodoItem {
+    return TodoItem("Test", false)
 }
 
 fun emulateLog(vararg strings: String): String {
