@@ -10,6 +10,7 @@
 
 package org.jetbrains.kotlin.ir.backend.js.lower.inline
 
+import org.jetbrains.kotlin.backend.common.BackendContext
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
@@ -32,7 +33,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 
-class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrBackendContext) : BodyLoweringPass {
+class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: BackendContext) : BodyLoweringPass {
     private val irFactory
         get() = context.irFactory
 

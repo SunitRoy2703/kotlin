@@ -1,5 +1,3 @@
-// IGNORE_BACKEND: WASM
-
 inline fun <reified T> baz(value: T): String = "OK" + value
 
 fun test(): String {
