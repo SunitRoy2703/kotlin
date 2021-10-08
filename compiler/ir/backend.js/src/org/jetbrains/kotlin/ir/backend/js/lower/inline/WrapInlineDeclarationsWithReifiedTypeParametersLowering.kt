@@ -72,6 +72,9 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrB
                                     function.valueParameters.forEachIndexed { index, valueParameter ->
                                         call.putValueArgument(index, JsIrBuilder.buildGetValue(valueParameter.symbol))
                                     }
+                                    for (i in 0 until expression.typeArgumentsCount) {
+                                        call.putTypeArgument(i, expression.getTypeArgument(i))
+                                    }
                                 },
                                 owner.returnType
                             )

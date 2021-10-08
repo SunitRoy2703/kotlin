@@ -1,6 +1,6 @@
 // IGNORE_BACKEND: WASM
 
-inline fun <reified T> baz(value: T): String = "OK"
+inline fun <reified T> baz(value: T): String = "OK" + value
 
 fun test(): String {
     val f: (Any) -> String = ::baz
@@ -27,7 +27,7 @@ val bar = { "OK".let(Bar::bar) }
 
 fun box(): String {
     val test1 = test()
-    if (test1 != "OK") return "fail1: $test1"
+    if (test1 != "OK1") return "fail1: $test1"
     val test2 = foo()
     if (test2 != "123OK") return "fail2: $test2"
     val test3 = bar()
