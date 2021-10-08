@@ -13,7 +13,6 @@ package org.jetbrains.kotlin.ir.backend.js.lower.inline
 import org.jetbrains.kotlin.backend.common.BackendContext
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.isInlineFunWithReifiedParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
@@ -25,14 +24,15 @@ import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionReferenceImpl
-import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrNull
-import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.ir.types.IrTypeArgument
+import org.jetbrains.kotlin.ir.types.IrTypeSubstitutor
+import org.jetbrains.kotlin.ir.util.typeSubstitutionMap
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 
+// Replace callable reference on inline function with reified parameter
+// with callable reference on new non inline function with substituted types
 class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: BackendContext) : BodyLoweringPass {
     private val irFactory
         get() = context.irFactory
@@ -48,6 +48,16 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: Backe
                 if (!owner.isInlineFunWithReifiedParameter()) {
                     return expression
                 }
+                val substitutionMap = expression.typeSubstitutionMap
+                    .entries
+                    .map { (key, value) ->
+                        key to (value as IrTypeArgument)
+                    }
+                val typeSubstitutor = IrTypeSubstitutor(
+                    substitutionMap.map { it.first },
+                    substitutionMap.map { it.second },
+                    context.irBuiltIns
+                )
 
                 val function = irFactory.addFunction(container.parent as IrDeclarationContainer) {
                     name = Name.identifier("${owner.name}${"$"}wrap")
@@ -56,17 +66,9 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: Backe
                     origin = JsIrBuilder.SYNTHESIZED_DECLARATION
                 }.also { function ->
                     owner.valueParameters.forEach { valueParameter ->
-                        val classifier = valueParameter.type.classifierOrNull
-                        val type: IrType = if (classifier is IrTypeParameterSymbol) {
-                            val index = classifier.owner.index
-                            expression.getTypeArgument(index)
-                                ?: error("Expression must have type argument with index $index: ${expression.render()}")
-                        } else {
-                            valueParameter.type
-                        }
                         function.addValueParameter(
                             valueParameter.name,
-                            type
+                            typeSubstitutor.substitute(valueParameter.type)
                         )
                     }
                     function.body = irFactory.createBlockBody(
