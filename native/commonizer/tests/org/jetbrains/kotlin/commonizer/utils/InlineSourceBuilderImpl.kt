@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -79,7 +80,7 @@ class InlineSourceBuilderImpl(private val disposable: Disposable) : InlineSource
             .map { psiFactory.createFile(it.name, KtTestUtil.doLoadFile(it)) }
             .toList()
 
-        return CommonResolverForModuleFactory.analyzeFiles(
+        val analysisResult = CommonResolverForModuleFactory.analyzeFiles(
             files = psiFiles,
             moduleName = Name.special("<${module.name}>"),
             dependOnBuiltIns = true,
@@ -89,7 +90,13 @@ class InlineSourceBuilderImpl(private val disposable: Disposable) : InlineSource
             dependenciesContainer = DependenciesContainerImpl(module.dependencies),
         ) { content ->
             environment.createPackagePartProvider(content.moduleContentScope)
-        }.moduleDescriptor
+        }
+
+        check(analysisResult.bindingContext.diagnostics.noSuppression().none { it.severity == Severity.ERROR }) {
+            "No errors expected in test sources for a module"
+        }
+
+        return analysisResult.moduleDescriptor
     }
 
     private inner class DependenciesContainerImpl(
