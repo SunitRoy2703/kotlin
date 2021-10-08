@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
+import org.jetbrains.kotlin.ir.backend.js.utils.isInlineFunWithReifiedParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.declarations.*
@@ -94,5 +95,3 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrB
         })
     }
 }
-
-fun IrFunction.isInlineFunWithReifiedParameter() = isInline && typeParameters.any { it.isReified }
