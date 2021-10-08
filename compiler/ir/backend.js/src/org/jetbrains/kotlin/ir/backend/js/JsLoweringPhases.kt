@@ -242,6 +242,12 @@ private val syntheticAccessorLoweringPhase = makeBodyLoweringPhase(
     description = "Wrap top level inline function to access through them from inline functions"
 )
 
+private val wrapInlineDeclarationsWithReifiedTypeParametersLowering = makeBodyLoweringPhase(
+    ::WrapInlineDeclarationsWithReifiedTypeParametersLowering,
+    name = "WrapInlineDeclarationsWithReifiedTypeParametersLowering",
+    description = "Wrap inline declarations with reified type parameters"
+)
+
 private val functionInliningPhase = makeBodyLoweringPhase(
     ::FunctionInlining,
     name = "FunctionInliningPhase",
@@ -249,14 +255,8 @@ private val functionInliningPhase = makeBodyLoweringPhase(
     prerequisite = setOf(
         expectDeclarationsRemovingPhase, sharedVariablesLoweringPhase,
         localClassesInInlineLambdasPhase, localClassesExtractionFromInlineFunctionsPhase,
-        syntheticAccessorLoweringPhase
+        syntheticAccessorLoweringPhase, wrapInlineDeclarationsWithReifiedTypeParametersLowering
     )
-)
-
-private val wrapInlineDeclarationsWithReifiedTypeParametersLowering = makeBodyLoweringPhase(
-    ::WrapInlineDeclarationsWithReifiedTypeParametersLowering,
-    name = "WrapInlineDeclarationsWithReifiedTypeParametersLowering",
-    description = "Wrap inline declarations with reified type parameters"
 )
 
 private val copyInlineFunctionBodyLoweringPhase = makeDeclarationTransformerPhase(
@@ -362,7 +362,8 @@ private val enumEntryRemovalLoweringPhase = makeDeclarationTransformerPhase(
 private val callableReferenceLowering = makeBodyLoweringPhase(
     ::CallableReferenceLowering,
     name = "CallableReferenceLowering",
-    description = "Build a lambda/callable reference class"
+    description = "Build a lambda/callable reference class",
+    prerequisite = setOf(functionInliningPhase, wrapInlineDeclarationsWithReifiedTypeParametersLowering)
 )
 
 private val returnableBlockLoweringPhase = makeBodyLoweringPhase(
