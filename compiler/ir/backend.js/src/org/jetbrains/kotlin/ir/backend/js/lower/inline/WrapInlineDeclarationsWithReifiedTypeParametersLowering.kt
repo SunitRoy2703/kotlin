@@ -82,8 +82,8 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrB
                     }
                 }
                 return IrFunctionReferenceImpl.fromSymbolOwner(
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
+                    expression.startOffset,
+                    expression.endOffset,
                     expression.type,
                     function.symbol,
                     function.typeParameters.size,
