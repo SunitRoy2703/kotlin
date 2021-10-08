@@ -88,8 +88,7 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrB
                     expression.type,
                     function.symbol,
                     function.typeParameters.size,
-                    expression.reflectionTarget,
-                    expression.origin
+                    expression.reflectionTarget
                 )
             }
         })
