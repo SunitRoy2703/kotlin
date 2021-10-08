@@ -25,6 +25,16 @@ object Bar {
 
 val bar = { "OK".let(Bar::bar) }
 
+class C {
+    inline fun <reified T: String> qux(value: T): String = "OK" + value
+}
+
+fun test2(): String {
+    val c = C()
+    val cr: (String) -> String = c::qux
+    return cr("456")
+}
+
 fun box(): String {
     val test1 = test()
     if (test1 != "OK1") return "fail1: $test1"
@@ -32,6 +42,8 @@ fun box(): String {
     if (test2 != "123OK") return "fail2: $test2"
     val test3 = bar()
     if (test3 != "321OK") return "fail3: $test3"
+    val test4 = test2()
+    if (test4 != "OK456") return "fail4: $test4"
 
     return "OK"
 }

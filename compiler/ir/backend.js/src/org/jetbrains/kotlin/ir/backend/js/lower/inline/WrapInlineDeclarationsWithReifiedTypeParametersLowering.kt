@@ -12,20 +12,22 @@ package org.jetbrains.kotlin.ir.backend.js.lower.inline
 
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.isInlineFunWithReifiedParameter
 import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationContainer
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionReferenceImpl
+import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.util.isTypeParameter
+import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
@@ -37,9 +39,13 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrB
     override fun lower(irBody: IrBody, container: IrDeclaration) {
         irBody.transformChildrenVoid(object : IrElementTransformerVoid() {
             override fun visitFunctionReference(expression: IrFunctionReference): IrExpression {
-                val owner = expression.symbol.owner
+                expression.transformChildrenVoid()
+
+                val owner = expression.symbol.owner as? IrSimpleFunction
+                    ?: return expression
+
                 if (!owner.isInlineFunWithReifiedParameter()) {
-                    return super.visitFunctionReference(expression)
+                    return expression
                 }
 
                 val function = irFactory.addFunction(container.parent as IrDeclarationContainer) {
@@ -49,9 +55,11 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrB
                     origin = JsIrBuilder.SYNTHESIZED_DECLARATION
                 }.also { function ->
                     owner.valueParameters.forEach { valueParameter ->
-                        val type: IrType = if (valueParameter.type.isTypeParameter()) {
-                            val index = (valueParameter.type.classifierOrFail.owner as IrTypeParameter).index
-                            expression.getTypeArgument(index)!!
+                        val classifier = valueParameter.type.classifierOrNull
+                        val type: IrType = if (classifier is IrTypeParameterSymbol) {
+                            val index = classifier.owner.index
+                            expression.getTypeArgument(index)
+                                ?: error("Expression must have type argument with index $index: ${expression.render()}")
                         } else {
                             valueParameter.type
                         }
@@ -61,13 +69,13 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: JsIrB
                         )
                     }
                     function.body = irFactory.createBlockBody(
-                        UNDEFINED_OFFSET,
-                        UNDEFINED_OFFSET
+                        owner.startOffset,
+                        owner.endOffset
                     ) {
                         statements.add(
                             JsIrBuilder.buildReturn(
                                 function.symbol,
-                                JsIrBuilder.buildCall((owner as IrSimpleFunction).symbol).also { call ->
+                                JsIrBuilder.buildCall(owner.symbol).also { call ->
                                     call.dispatchReceiver = expression.dispatchReceiver
                                     call.extensionReceiver = expression.extensionReceiver
                                     function.valueParameters.forEachIndexed { index, valueParameter ->
