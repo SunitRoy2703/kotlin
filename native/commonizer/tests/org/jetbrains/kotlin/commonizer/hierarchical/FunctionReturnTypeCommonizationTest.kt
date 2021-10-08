@@ -75,7 +75,7 @@ class FunctionReturnTypeCommonizationTest : AbstractInlineSourcesCommonizationTe
         result.assertCommonized(
             "(a,b)", """
                 expect interface A { 
-                    expect class B()
+                    class B()
                 }
                 expect fun x(): A.B
             """
