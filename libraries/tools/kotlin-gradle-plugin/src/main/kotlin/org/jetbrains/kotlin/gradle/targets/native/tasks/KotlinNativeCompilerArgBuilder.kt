@@ -87,6 +87,7 @@ internal fun buildKotlinNativeBinaryLinkerArgs(
     entryPoint: String?,
     embedBitcode: BitcodeEmbeddingMode,
     linkerOpts: List<String>,
+    binaryOptions: Map<String, String>,
     isStaticFramework: Boolean,
     exportLibraries: List<File>,
     includeLibraries: List<File>,
@@ -103,6 +104,7 @@ internal fun buildKotlinNativeBinaryLinkerArgs(
         else -> Unit
     }
     linkerOpts.forEach { addArg("-linker-option", it) }
+    binaryOptions.forEach { (name, value) -> add("-Xbinary=$name=$value") }
     addKey("-Xstatic-framework", isStaticFramework)
 
     addAll(buildKotlinNativeCommonArgs(languageSettings, enableEndorsedLibs, kotlinOptions, compilerPlugins))

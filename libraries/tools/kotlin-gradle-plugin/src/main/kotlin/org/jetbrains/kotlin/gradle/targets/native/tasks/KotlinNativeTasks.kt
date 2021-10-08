@@ -625,6 +625,7 @@ constructor(
             entryPoint,
             embedBitcode,
             linkerOpts,
+            binaryOptions,
             isStaticFramework,
             exportLibraries.files.filterKlibsPassedToCompiler(),
             listOf(intermediateLibrary.get()),
