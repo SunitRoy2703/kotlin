@@ -289,7 +289,8 @@ private fun Path.addDefaultSettingsValues() {
 }
 
 private fun TestProject.agreeToBuildScanService() {
-    settingsGradle.append(
+    val settingsFile = if (Files.exists(settingsGradle)) settingsGradle else settingsGradleKts
+    settingsFile.append(
         """
             
         gradleEnterprise {
