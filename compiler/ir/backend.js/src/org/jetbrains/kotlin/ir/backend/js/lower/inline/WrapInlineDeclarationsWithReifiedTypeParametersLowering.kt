@@ -72,8 +72,8 @@ class WrapInlineDeclarationsWithReifiedTypeParametersLowering(val context: Backe
                         )
                     }
                     function.body = irFactory.createBlockBody(
-                        owner.startOffset,
-                        owner.endOffset
+                        expression.startOffset,
+                        expression.endOffset
                     ) {
                         statements.add(
                             JsIrBuilder.buildReturn(

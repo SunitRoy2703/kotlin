@@ -62,6 +62,10 @@ fun test7(): String {
 class E<T>
 public inline fun <reified T> E<T>.foo(value: T): String = "OK" + value
 
+class F<T1> {
+    inline fun <reified T2> foo(x: T1, y: T2): Any? = "OK" + x + y
+}
+
 fun box(): String {
     val test1 = test()
     if (test1 != "OK1") return "fail1: $test1"
@@ -79,6 +83,8 @@ fun box(): String {
     if (test7 != "OKmer, nas73, 37") return "fail7: $test7"
     val test8 = E<Int>().foo(56)
     if (test8 != "OK56") return "fail8: $test8"
+    val test9 = F<Int>().foo(65, "hello")
+    if (test9 != "OK65hello") return "fail9: $test9"
 
     return "OK"
 }
