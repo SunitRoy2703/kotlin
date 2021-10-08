@@ -35,6 +35,16 @@ fun test2(): String {
     return cr("456")
 }
 
+inline fun <reified T: Any> ((Any) -> String).cux(value: T): String = this(value)
+
+fun test3(): String {
+    val foo: (Any) -> String = ({ b: Any ->
+        val a: (Any) -> String = ::baz
+        a(b)
+    })::cux
+    return foo(3)
+}
+
 fun box(): String {
     val test1 = test()
     if (test1 != "OK1") return "fail1: $test1"
@@ -44,6 +54,9 @@ fun box(): String {
     if (test3 != "321OK") return "fail3: $test3"
     val test4 = test2()
     if (test4 != "OK456") return "fail4: $test4"
+
+    val test5 = test3()
+    if (test5 != "OK3") return "fail5: $test5"
 
     return "OK"
 }
